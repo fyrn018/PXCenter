@@ -10,6 +10,7 @@
     "prebuild": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs && node scripts/prepare-webfonts.mjs",
     "export:archives": "node scripts/export-records.mjs",
     "build": "tsc && vite build && node scripts/build-pwa.mjs",
+    "obfuscate": "node scripts/obfuscate.mjs",
     "start": "node index.js",
     "server": "node index.js"
   },
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@types/three": "^0.183.0",
+    "javascript-obfuscator": "^5.7.0",
     "prettier": "^3.9.6",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
