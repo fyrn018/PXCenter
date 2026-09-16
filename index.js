@@ -99,22 +99,80 @@ async function getip() {
   }
 }
 
+// 静态文件与 MIME 类型配置
+const DIST_DIR = path.join(__dirname, 'dist');
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.mjs': 'application/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.glb': 'model/gltf-binary',
+  '.gltf': 'model/gltf+json',
+  '.ogg': 'audio/ogg',
+  '.mp3': 'audio/mpeg',
+  '.txt': 'text/plain; charset=utf-8',
+  '.pdf': 'application/pdf',
+};
+
+// 静态文件发送助手（支持 HTTP Range、MIME 类型及强缓存策略）
+function serveStaticFile(req, res, filePath, stat) {
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+  const totalSize = stat.size;
+
+  if (filePath.includes('/fonts/') || filePath.includes('/assets/')) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  } else if (ext === '.html' || filePath.endsWith('sw.js') || filePath.endsWith('manifest.webmanifest') || filePath.endsWith('pwa-build.json')) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  } else {
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+  }
+  res.setHeader('Accept-Ranges', 'bytes');
+
+  const range = req.headers.range;
+  if (range) {
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : totalSize - 1;
+    if (isNaN(start) || start >= totalSize || end >= totalSize || start > end) {
+      res.writeHead(416, { 'Content-Range': `bytes */${totalSize}` });
+      return res.end();
+    }
+    const chunksize = (end - start) + 1;
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${totalSize}`,
+      'Content-Length': chunksize,
+      'Content-Type': contentType,
+    });
+    fs.createReadStream(filePath, { start, end }).pipe(res);
+  } else {
+    res.writeHead(200, {
+      'Content-Length': totalSize,
+      'Content-Type': contentType,
+    });
+    fs.createReadStream(filePath).pipe(res);
+  }
+}
+
 // HTTP 路由
 const httpServer = http.createServer(async (req, res) => {
-  if (req.url === '/') {
-    const filePath = path.join(__dirname, 'index.html');
-    fs.readFile(filePath, 'utf8', (err, content) => {
-      if (err) {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end('Hello world!');
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(content);
-    });
-    return;
-  } else if (req.url === `/${SUB_PATH}`) {
-    await getisp();await getip();
+  const reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const pathname = decodeURIComponent(reqUrl.pathname);
+
+  // 1. 节点订阅分发路由
+  if (pathname === `/${SUB_PATH}`) {
+    await getisp(); await getip();
     const namePart = NAME ? `${NAME}-${ISP}` : ISP;
     const tlsParam = Tls === 'tls' ? 'tls' : 'none';
     const ssTlsParam = Tls === 'tls' ? 'tls;' : '';
@@ -125,12 +183,43 @@ const httpServer = http.createServer(async (req, res) => {
     const subscription = vlsURL + '\n' + troURL + '\n' + ssURL;
     const base64Content = Buffer.from(subscription).toString('base64');
 
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end(base64Content + '\n');
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found\n');
+    return;
   }
+
+  // 2. 伪装前台静态资源分发（RhineLabUI 3D 终端）
+  let cleanPath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
+  if (cleanPath === '/' || cleanPath === '') {
+    cleanPath = '/index.html';
+  }
+
+  const targetFile = path.join(DIST_DIR, cleanPath);
+  fs.stat(targetFile, (err, stat) => {
+    if (!err && stat.isFile()) {
+      serveStaticFile(req, res, targetFile, stat);
+      return;
+    }
+
+    // SPA 路由回退：无扩展名的路径回退至 dist/index.html
+    const fallbackFile = path.join(DIST_DIR, 'index.html');
+    fs.stat(fallbackFile, (err2, stat2) => {
+      if (!err2 && stat2.isFile() && !path.extname(cleanPath)) {
+        serveStaticFile(req, res, fallbackFile, stat2);
+        return;
+      }
+      // 若尚未编译 dist，回退到根目录 index.html
+      const rootIndex = path.join(__dirname, 'index.html');
+      fs.stat(rootIndex, (err3, stat3) => {
+        if (!err3 && stat3.isFile() && (cleanPath === '/index.html' || !path.extname(cleanPath))) {
+          serveStaticFile(req, res, rootIndex, stat3);
+          return;
+        }
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Not Found\n');
+      });
+    });
+  });
 });
 
 // Custom DNS

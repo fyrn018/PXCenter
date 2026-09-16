@@ -1,23 +1,38 @@
 {
-  "name": "nzws-js",
-  "version": "0.1.0",
-  "description": "nzws-js",
+  "name": "pxcenter-rhine",
+  "version": "1.0.0",
+  "description": "PXCenter with RhineLabUI masquerade and proxy backend",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "postinstall": "node scripts/patch-rolling-number.mjs && npm run build",
+    "predev": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs",
+    "dev": "vite --host 127.0.0.1",
+    "prebuild": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs && node scripts/prepare-webfonts.mjs",
+    "export:archives": "node scripts/export-records.mjs",
+    "build": "tsc && vite build && node scripts/build-pwa.mjs",
+    "start": "node index.js",
+    "server": "node index.js"
   },
   "dependencies": {
-    "ws": "^8.21.2",
-    "axios": "^1.19.0",
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.8.1",
-    "systeminformation": "^5.33.1"
-    
+    "@kitlangton/rolling-number": "0.4.1",
+    "axios": "^1.19.0",
+    "systeminformation": "^5.33.1",
+    "three": "^0.183.0",
+    "ws": "^8.21.2"
+  },
+  "devDependencies": {
+    "@types/three": "^0.183.0",
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
   },
   "optionalDependencies": {
     "node-pty": "^1.1.0"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   }
 }
+
