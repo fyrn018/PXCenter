@@ -6,7 +6,14 @@
       "src": "index.js",
       "use": "@vercel/node",
       "config": {
-        "maxDuration": 300
+        "maxDuration": 300,
+        "includeFiles": [
+          "dist/**",
+          "node_modules/systeminformation/**",
+          "node_modules/@grpc/**",
+          "node_modules/axios/**",
+          "node_modules/ws/**"
+        ]
       }
     }
   ],
