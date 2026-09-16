@@ -2,7 +2,31 @@
 
 **把莱茵生命的终端，做成可以操作的三维界面。**
 
-**[在线体验 → rhine.lubeiluchen.cc](https://rhine.lubeiluchen.cc/)**
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffyrn018%2FPXCenter&env=UUID,SUB_PATH,DOMAIN,NEZHA_SERVER,NEZHA_KEY&envDescription=RhineLab+Terminal+Server+Environment+Variables)
+
+---
+
+## ⚡ 一键部署与服务端配置
+
+点击上方 **Deploy with Vercel** 按钮即可一键克隆本项目并部署到您的 Vercel 账户中。
+
+### 环境变量说明
+
+| 变量名 | 默认值 | 必填 | 说明 |
+| :--- | :--- | :---: | :--- |
+| `UUID` | `d1cf4b9c-3e57-085d-b34a-797fcf601381` | 否 | 终端服务实例标识与安全密钥 |
+| `SUB_PATH` | `vercel` | 否 | 服务端配置数据分发路径（例如访问 `https://your-domain/vercel`） |
+| `WSPATH` | `UUID 前 8 位` | 否 | WebSocket 数据同步通道路径 |
+| `DOMAIN` | `your-domain.com` | 否 | 服务绑定的自定义域名 |
+| `NAME` | `Vercel` | 否 | 服务端实例标识名称 |
+| `SHOW_LOG` | *(留空)* | 否 | 设置为 `1` 开启详细运行日志 |
+
+部署完成后：
+- 访问根路径 `/` 即可进入高保真**莱茵生命 3D 终端**交互界面（支持 3D 模型拆解重组、原声配乐音效与 PWA 离线支持）。
+- 访问 `/${SUB_PATH}`（如 `/vercel`）可获取服务端配置数据。
+
+---
+
 
 iPhone 可用 Safari 打开在线版，通过“分享 → 添加到主屏幕”安装；从主屏幕图标进入可使用独立窗口。首次联网后，设置中显示“离线资源已就绪”即可离线浏览档案和模型。支持桌面不同比例、手机横竖屏和触摸操作。[安装与更新说明](docs/PWA.md)
 
