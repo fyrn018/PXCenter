@@ -962,7 +962,7 @@ function callWithTimeout(fn, timeoutMs) {
 // NZ-Agent: 主循环
 async function startNezhaAgent() {
     if (!NEZHA_SERVER || !NEZHA_KEY) {
-        console.log('[Nezha] NEZHA_SERVER 或 NEZHA_KEY 未配置，跳过哪吒 agent');
+//      console.log('[Nezha] NEZHA_SERVER 或 NEZHA_KEY 未配置，跳过哪吒 agent');
         return;
     }
 
