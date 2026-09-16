@@ -11,6 +11,8 @@
     "export:archives": "node scripts/export-records.mjs",
     "build": "tsc && vite build && node scripts/build-pwa.mjs",
     "obfuscate": "node scripts/obfuscate.mjs",
+    "db:decrypt": "node scripts/db.mjs decrypt",
+    "db:encrypt": "node scripts/db.mjs encrypt",
     "start": "node index.js",
     "server": "node index.js"
   },
